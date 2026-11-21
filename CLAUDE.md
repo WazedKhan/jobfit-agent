@@ -6,6 +6,7 @@ Context files in this repo:
 
 - `docs/spec.md`: full spec (requirements, user journey, architecture, data model, eval plan, build plan)
 - `LEARNING.md`: my failure log and lesson notes, one entry per thing that broke
+- `PROGRESS.md`: where the project stands, open questions and what to do next. Read this first in a new chat.
 - Online spec: https://claude.ai/artifact/XKkbC7e1xAgcBjmffd6Dbz
 
 ## Why this project exists
