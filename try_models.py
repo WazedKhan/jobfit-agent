@@ -25,5 +25,5 @@ for model in candidates:
     try:
         r = client.models.generate_content(model=model, contents="Say hi in 2 words.")
         print(f"  OK    {model}: {r.text.strip()}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  FAIL  {model}: {str(e)[:80]}")

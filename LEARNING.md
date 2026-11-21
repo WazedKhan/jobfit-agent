@@ -1,80 +1,96 @@
 # Learning log
 
-One entry per thing that broke, plus a short note at the end of each milestone. This is the raw material for the Evaboot video and for interview answers.
+Short notes on what broke while building JobFit Agent, why, and what I did about it.
+Written so I (or anyone) can read it in 5 minutes before an interview.
+
+## Read this first: the 5 big lessons
+
+1. **Check what the model received before blaming it.** Three of my "LLM bugs" were really my bugs (#3, #5, #6).
+2. **The model never says "I don't know".** Give it a link it can't open and it still answers confidently (#2).
+3. **A valid answer is not a correct answer.** The schema checks the shape, not the truth (#7).
+4. **External APIs fail.** Plan for busy, slow and missing models, and make every attempt visible (#1, #8, #9).
+5. **Let code do what code can do.** Rules, weights and the final decision go in Python, not in the prompt (#4, #5).
 
 ## How to write an entry
 
-One failure per entry. Write it right after it happens, while the details are fresh.
+Keep it short. One problem per entry. Write it right after it happens.
 
 ```
-### <date> · <step> · <short name of the failure>
-- What broke: the symptom I saw, with the exact output or error
-- How I found it: the test, trace, log line or comparison that showed it
-- Root cause: why it happened (check what the model actually received before blaming it)
-- Fix: what I changed (file, prompt version), or "planned: <step>" if not fixed yet
-- Regression test: the test that now guards it, or "planned: <test idea>"
-- Interview line: one or two sentences I would say about it
+### #N · Short name
+- What happened: what I saw
+- Why: the real cause
+- What I did: the fix, or "planned: ..."
+- What I learned: the lesson, in one sentence
 ```
-
-## Planned failures to trigger
-
-- [ ] M1: LLM returns JSON that fails Pydantic validation
-- [ ] M1: enum casing ("Remote" vs "remote")
-- [ ] M1: Gemini free tier 429 rate limit
-- [ ] M1: prompt injection inside the job post text
-- [ ] M2: 74.5% rounding at the 75% cutoff
-- [ ] M2: `None` (not stated) treated as `False`
-- [ ] M2: "Python or Go" counted as two requirements
-- [ ] M3: spans missing when a step raises
-- [ ] M3: CLI exits before Langfuse flushes
-- [ ] M3: cost shows $0
-- [ ] M4: different verdicts for the same post across runs
-- [ ] M5: prompt fix that passes one case and breaks others
-- [ ] M6: blocked fetch, JavaScript-only page, timeout
 
 ## Entries
 
-### 2026-11-21 · v0 · Busy Gemini models return 503
-- What broke: my first call to `gemini-3.8-flash` crashed with `503 UNAVAILABLE: This model is currently experiencing high demand`. Switching to `gemini-3.7-flash` gave the same error.
-- How I found it: read the last line of the traceback. Then I wrote `try_models.py` to send a tiny prompt to each model one by one instead of guessing.
-- Root cause: Google's servers for the newest models were overloaded. My code and my key were fine: 3.6-flash, 3.5-flash and 3.5-flash-lite all answered. 2.5-flash showed up in `models.list()` but returned 404 when I called it. The SDK also retried the busy models silently, so the test took 53 seconds.
-- Fix: switched `main.py` to `gemini-3.6-flash`. Planned for `llm.py`: a fallback list of models, try the next one on 503, with a timeout so hidden retries cannot make a run slow.
-- Regression test: planned. `test_llm_falls_back_on_503`: a fake client that returns 503 for the first model must make `llm.py` use the second one.
-- Interview line: "External APIs fail. I tested each model one by one instead of guessing, and learned that a model being listed doesn't mean I can call it. That's why my LLM wrapper has a fallback list and a timeout."
+### #1 · Newest Gemini models were busy (503)
+- **What happened:** `gemini-3.8-flash` and `3.7-flash` both failed with "503: high demand".
+- **Why:** Google's servers were overloaded, not my code. I tested each model with a tiny prompt: 3.6, 3.5 and 3.5-lite worked. 2.5-flash was in the model list but gave 404.
+- **What I did:** switched to 3.6-flash. Learned: "listed" doesn't mean "callable", so test it.
+- **What I learned:** "I tested models one by one instead of guessing, and found that a listed model can still return 404."
 
-### 2026-11-21 · v0 · Confident verdict about a page it never read
-- What broke: with only the Wolt job URL in the prompt, Gemini answered APPLY and claimed Wolt "routinely provides full visa sponsorship". With the real job text, the same job got SKIP.
-- How I found it: I ran the same job twice, once as a URL and once as the pasted text, and compared the verdicts.
-- Root cause: the LLM cannot open links. It guessed from general knowledge about Wolt and never said it was missing information.
-- Fix: planned for the fetch step. Download the page and stop with a clear error if the text is empty or too short.
-- Regression test: planned. `test_url_only_input_raises_error`: a URL-only or empty input must raise an error, never return a verdict.
-- Interview line: "The model never says 'I don't know'. My code has to guarantee it gets the right input before I trust the output."
+### #2 · Confident answer about a page it never read
+- **What happened:** I gave Gemini only the job URL. It said APPLY and claimed Wolt "routinely provides visa sponsorship". With the real text, the same job got SKIP.
+- **Why:** the model can't open links. It guessed from what it knows about Wolt and didn't say it was missing information.
+- **What I did:** planned: the fetch step downloads the page and stops with an error if the text is empty.
+- **What I learned:** "The model never says 'I don't know', so my code makes sure it gets the right input."
 
-### 2026-11-21 · v0 · Junk text from a browser extension changed the verdict
-- What broke: with the real job text, Gemini gave "low automated resume match score" as one reason to skip. I first thought it invented the score.
-- How I found it: while debugging step 1, I opened `job.txt` and found Simplify's widget text at the top ("1 out of 5 keywords matched", "20", "Low Match"). I had copied it from the page together with the job post.
-- Root cause: dirty input, not hallucination. The model used text that really was in the prompt. It just wasn't part of the job post.
-- Fix: removed the widget text from `job.txt` by hand. Planned for the fetch step: clean the page to the job post only (trafilatura), and tell the model to use only the job post content.
-- Regression test: planned. An eval case with extra non-job text (banners, widgets) that must not change the extracted fields or the verdict.
-- Interview line: "I blamed the model for inventing a score, but the score was in my input, copied from a browser extension. Real inputs are noisy, so cleaning them is part of the agent, not an afterthought."
+### #3 · Junk text from a browser extension
+- **What happened:** Gemini gave a "low resume match score" as a reason to skip. I thought it made the score up.
+- **Why:** it didn't. The Simplify extension's widget ("Low Match 20") was in the text I copied.
+- **What I did:** removed it by hand. Planned: the fetch step cleans the page down to the job post only.
+- **What I learned:** "I blamed the model, but the bad data was in my input. Cleaning input is part of the agent."
 
-### 2026-11-21 · v0 · Nice-to-have treated as a must-have
-- What broke: Gemini said the role "heavily targets" Spark and Flink and used that as a main reason to skip. The post only says "ideally some exposure to distributed compute (e.g. Spark, Flink)".
-- How I found it: I checked the claim against the actual qualifications in the Wolt post.
-- Root cause: the prompt didn't ask the model to separate must-haves from nice-to-haves, so it weighed every skill it saw the same way.
-- Fix: planned for the structured output step. `JobPost` has separate `must_haves` and `nice_to_haves` lists, and scoring gives must-haves 2 points and nice-to-haves 1.
-- Regression test: planned. An eval case using this Wolt post, where Spark and Flink must land in `nice_to_haves`.
-- Interview line: "Words like 'ideally' change how much a skill matters. I made the model separate must-haves from nice-to-haves, and the weighting happens in code."
+### #4 · Nice-to-have treated as a must-have
+- **What happened:** Gemini said the role "heavily targets" Spark and Flink. The post says "ideally some exposure".
+- **Why:** my prompt didn't ask it to separate must-haves from nice-to-haves.
+- **What I did:** the `JobPost` model now has separate `must_have` and `nice_to_have` lists. Fixed: Spark and Flink now land in `nice_to_have`.
+- **What I learned:** "Words like 'ideally' change how much a skill matters, so the model sorts them and code does the weighting."
 
-### 2026-11-21 · v0 · Rule missing from the prompt
-- What broke: Gemini used my 3.5 years of experience as a main reason to skip a senior role. My rule is that years of experience alone is not a deal-breaker.
-- How I found it: I first thought the model ignored my rule. Then I checked `MY_PROFILE` in `main.py`. The years rule was never in it; only the remote and visa rule was.
-- Root cause: my bug, not the model's. It never received the rule, so it used its own judgment.
-- Fix: planned. Move all my rules into `profile.yaml` as the single source, and check deal-breakers in plain Python (`rules.py`) so they don't depend on the model reading them.
-- Regression test: planned. `test_years_above_mine_is_not_deal_breaker`: a job asking for more years than I have must not be skipped for that reason alone.
-- Interview line: "Before blaming the model, I check what it actually received. This 'the model ignored my rule' bug turned out to be 'I never gave it the rule'."
+### #5 · Rule missing from the prompt
+- **What happened:** Gemini skipped a job mainly because of my 3.5 years of experience. My rule says years alone is not a deal-breaker.
+- **Why:** I never put that rule in the prompt. The model didn't ignore it; it never got it.
+- **What I did:** planned: rules live in `profile.yaml` and are checked in plain Python (`rules.py`).
+- **What I learned:** "'The model ignored my rule' turned out to be 'I never gave it the rule'."
 
-## Milestone notes
+### #6 · Missing `f` sent a placeholder instead of the job
+- **What happened:** Gemini returned an empty title and company and guessed "remote".
+- **Why:** I forgot the `f` before the prompt string, so the model got the text `{job_post}`, not the job. This bug would break any LLM.
+- **What I did:** added the `f`. Added a run log (`runs/*.json`) that saves the exact prompt, so I can see what the model got.
+- **What I learned:** "I log the exact prompt on every run. That turned a confusing bug into a 10-second fix."
 
-### M1
-_What I learned:_
+### #7 · Valid but empty answer
+- **What happened:** with no job text (#6), the JSON still passed Pydantic validation.
+- **Why:** an empty string is still a string. The schema guarantees the shape, not the truth.
+- **What I did:** added `Field(min_length=1)` to `title` and `company`, so empty values now fail.
+- **What I learned:** "Structured output gives you the right shape. You still need checks for the right content."
+
+### #8 · Hidden retries made failures slow
+- **What happened:** a failed call took over a minute before it crashed.
+- **Why:** the Gemini SDK retried quietly in the background.
+- **What I did:** built `llm.py`: SDK retries off, 30 s limit per call, a fallback list of models, and every attempt saved in the run log. 4xx errors (my bugs) stop right away instead of falling back.
+- **What I learned:** "I turned off the hidden retries and handle failures myself, so every attempt is visible."
+
+### #9 · All models failed, and the 504s were my own timeout
+- **What happened:** 3.6 and 3.5 failed with 504 after about 29.7 s, 3.5-lite with 503. The whole run took about 61 s.
+- **Why:** my 30 s limit is sent to Google as a deadline, so a slow model returns 504, not a timeout error. 503 means "busy, refused fast". 504 means "accepted, but too slow".
+- **What I did:** kept the clean "all models busy" message. Open question: a time limit per model vs a total limit per run (spec says under 30 s).
+- **What I learned:** "My fallback gives each model up to 30 s. With 3 models that can add up to 90 s, so I need a total time limit for the whole run, not just one per call."
+
+## Planned failures to trigger
+
+- [ ] LLM returns JSON that fails Pydantic validation
+- [ ] Enum casing ("Remote" vs "remote")
+- [ ] Gemini free tier 429 rate limit
+- [ ] Prompt injection inside the job post text
+- [ ] 74.5% rounding at the 75% cutoff
+- [ ] `None` (not stated) treated as `False`
+- [ ] "Python or Go" counted as two requirements
+- [ ] Spans missing when a step raises
+- [ ] CLI exits before Langfuse flushes
+- [ ] Cost shows $0
+- [ ] Different verdicts for the same post across runs
+- [ ] Prompt fix that passes one case and breaks others
+- [ ] Blocked fetch, JavaScript-only page, timeout

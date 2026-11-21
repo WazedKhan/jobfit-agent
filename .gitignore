@@ -226,3 +226,5 @@ __marimo__/
 *.db
 *.sqlite
 .langfuse/
+runs/
+job.txt

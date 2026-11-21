@@ -24,6 +24,7 @@ Context files in this repo:
 - Never invent numbers for the video or README. Metrics come only from real eval runs.
 - I am a backend engineer (3.5 years; Python/Django/FastAPI, Go, PostgreSQL). Skip beginner explanations of Python or HTTP; do explain LLM, tracing and eval concepts.
 - No em dashes in any text written for me.
+- Never run `git commit`, `git push` or any other command that changes git history. Only give me the commit message and the `git add` / `git commit` commands to run myself.
 
 ## Learning mode: learn, build, break, fix, log
 
