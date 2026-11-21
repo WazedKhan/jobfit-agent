@@ -79,6 +79,18 @@ Keep it short. One problem per entry. Write it right after it happens.
 - **What I did:** kept the clean "all models busy" message. Open question: a time limit per model vs a total limit per run (spec says under 30 s).
 - **What I learned:** "My fallback gives each model up to 30 s. With 3 models that can add up to 90 s, so I need a total time limit for the whole run, not just one per call."
 
+### #10 · The fallback model gave a different answer
+- **What happened:** 3.6 and 3.5 timed out, so 3.5-lite answered. Same job, but `options` was now filled in and the `text` was reworded instead of copied from the post.
+- **Why:** a fallback swaps in a different (smaller) model, and each model reads the post a bit differently.
+- **What I did:** the run log saves which model answered. Planned: run the eval set per model, so I know if a bad result came from my prompt or from a weaker model taking over.
+- **What I learned:** A fallback makes the agent more reliable but less consistent. I always need to know which model produced the answer.
+
+### #11 · "And" treated as "or" in options
+- **What happened:** "Comfortable working with backend systems, APIs" came back with `options: ["backend systems", "APIs"]`, which means either one is enough. The post means both.
+- **Why:** my prompt only explains `options` for "or" choices. It doesn't say what to do with "and" lists.
+- **What I did:** not fixed yet, on purpose. Nothing uses `options` until scoring exists, so I can't measure the effect. Planned: when scoring is built, add a test case (someone with APIs but no backend systems must not get full points), watch it fail, then fix the prompt.
+- **What I learned:** I noticed it early but waited until I could measure it. A fix I can't verify is just a guess.
+
 ## Planned failures to trigger
 
 - [ ] LLM returns JSON that fails Pydantic validation
