@@ -107,29 +107,32 @@ class JobPost(BaseModel):
     company: str
     location: str
     work_mode: Literal["remote", "hybrid", "onsite"]
-    open_to_bangladesh: bool | None      # None = not stated
+    open_to_bangladesh: bool | None  # None = not stated
     visa_support: bool | None
     years_required: int | None
     must_haves: list[Requirement]
     nice_to_haves: list[Requirement]
     salary: str | None
 
+
 class Requirement(BaseModel):
-    text: str                  # as written in the post
-    options: list[str]         # "Python or Go" -> ["Python", "Go"]
+    text: str  # as written in the post
+    options: list[str]  # "Python or Go" -> ["Python", "Go"]
+
 
 class RequirementMatch(BaseModel):
     requirement: str
     status: Literal["met", "partial", "missing"]
-    evidence: str | None       # quote from profile.yaml; required unless missing
+    evidence: str | None  # quote from profile.yaml; required unless missing
+
 
 class Evaluation(BaseModel):
     verdict: Literal["apply", "skip"]
-    match_pct: int             # computed in code
+    match_pct: int  # computed in code
     deal_breakers: list[str]
     matches: list[RequirementMatch]
     gaps: list[str]
-    highlights: list[str]      # what to put first in the resume
+    highlights: list[str]  # what to put first in the resume
     prompt_version: str
     trace_id: str
 ```

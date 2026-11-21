@@ -59,24 +59,27 @@ Key principle: the LLM only does what code cannot (reading messy text, matching 
 ```python
 class Requirement(BaseModel):
     text: str
-    options: list[str]          # "Python or Go" -> ["Python", "Go"]
+    options: list[str]  # "Python or Go" -> ["Python", "Go"]
+
 
 class JobPost(BaseModel):
     title: str
     company: str
     location: str
     work_mode: Literal["remote", "hybrid", "onsite"]
-    open_to_bangladesh: bool | None   # None = not stated
+    open_to_bangladesh: bool | None  # None = not stated
     visa_support: bool | None
     years_required: int | None
     must_haves: list[Requirement]
     nice_to_haves: list[Requirement]
     salary: str | None
 
+
 class RequirementMatch(BaseModel):
     requirement: str
     status: Literal["met", "partial", "missing"]
-    evidence: str | None        # required unless missing
+    evidence: str | None  # required unless missing
+
 
 class Evaluation(BaseModel):
     verdict: Literal["apply", "skip"]
