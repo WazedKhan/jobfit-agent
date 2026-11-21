@@ -1,0 +1,7 @@
+[project]
+name = "jobfit-agent"
+version = "0.1.0"
+description = "LLM agent that judges job posts against my profile and returns an Apply or Skip verdict"
+readme = "README.md"
+requires-python = ">=3.15"
+dependencies = []
