@@ -93,7 +93,7 @@ SQLite `runs` table: id, created_at, source_url, job_text_hash, model, prompt_ve
 
 ## Stack
 
-- Python 3.12 (`uv python install 3.12`), uv, ruff, mypy, pytest
+- Python 3.15 (`uv python install 3.15`), uv, ruff, mypy, pytest
 - FastAPI + Typer
 - Gemini API free tier via `google-genai` (key from aistudio.google.com), wrapped in `llm.py` so the provider can be swapped
 - Pydantic v2

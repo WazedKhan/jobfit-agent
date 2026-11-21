@@ -166,11 +166,11 @@ I observe the agent through Langfuse traces and judge its quality against a data
 
 ## Tech stack and project structure
 
-Python 3.12 throughout, with one LLM provider behind a small client wrapper so the model can be swapped.
+Python 3.15 throughout, with one LLM provider behind a small client wrapper so the model can be swapped.
 
 | Layer | Choice | Why |
 | --- | --- | --- |
-| Language | Python 3.12, uv for packages | The role asks for strong Python |
+| Language | Python 3.15, uv for packages | Latest stable; all deps verified to install on it |
 | API and CLI | FastAPI + Typer | FastAPI is already in my stack; Typer for quick local runs |
 | LLM | Gemini free tier via `google-genai`, with structured output | $0 budget; swappable behind `llm.py` |
 | Validation | Pydantic v2 | Typed outputs; a failed parse is a visible error |

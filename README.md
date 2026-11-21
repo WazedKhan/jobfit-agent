@@ -46,7 +46,7 @@ I review a lot of job posts, and each one takes 10 to 20 minutes to judge proper
 
 ## Stack
 
-Python 3.12, uv, Pydantic v2, Gemini API (via `google-genai`, behind a swappable wrapper), Typer, FastAPI, httpx, trafilatura, SQLite, Langfuse, pytest, ruff, mypy.
+Python 3.15, uv, Pydantic v2, Gemini API (via `google-genai`, behind a swappable wrapper), Typer, FastAPI, httpx, trafilatura, SQLite, Langfuse, pytest, ruff, mypy.
 
 ## Roadmap
 
