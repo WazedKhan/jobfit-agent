@@ -16,6 +16,6 @@ class JobPost(BaseModel):
     open_to_bd: bool | None
     visa_support: bool | None
     years_required: int | None
-    must_have: list[Requirement]
-    nice_to_have: list[Requirement]
+    must_haves: list[Requirement]
+    nice_to_haves: list[Requirement]
     salary: str | None

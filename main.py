@@ -14,7 +14,7 @@ job_post = Path("job.txt").read_text(encoding="utf-8")
 prompt = f"""Read this job post and fill in the fields.
 Rules:
 - Only use information written in the post, if something is not stated, use null.
-- must_have: things the post requires, nice_to_have: words like "ideally", "bonus", "plus", "nice to have".
+- must_haves: things the post requires, nice_to_haves: words like "ideally", "bonus", "plus", "nice to have".
 - If a requirement offers choices ("Python or Go"), list them in options.
 
 Job Post:

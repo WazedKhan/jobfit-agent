@@ -46,7 +46,7 @@ Keep it short. One problem per entry. Write it right after it happens.
 ### #4 · Nice-to-have treated as a must-have
 - **What happened:** Gemini said the role "heavily targets" Spark and Flink. The post says "ideally some exposure".
 - **Why:** my prompt didn't ask it to separate must-haves from nice-to-haves.
-- **What I did:** the `JobPost` model now has separate `must_have` and `nice_to_have` lists. Fixed: Spark and Flink now land in `nice_to_have`.
+- **What I did:** the `JobPost` model now has separate `must_haves` and `nice_to_haves` lists. Fixed: Spark and Flink now land in `nice_to_haves`.
 - **What I learned:** "Words like 'ideally' change how much a skill matters, so the model sorts them and code does the weighting."
 
 ### #5 · Rule missing from the prompt

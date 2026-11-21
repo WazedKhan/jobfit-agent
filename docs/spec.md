@@ -103,11 +103,11 @@ Three Pydantic models carry the data between steps; SQLite stores one row per ru
 
 ```python
 class JobPost(BaseModel):
-    title: str
-    company: str
+    title: str = Field(min_length=1)
+    company: str = Field(min_length=1)
     location: str
     work_mode: Literal["remote", "hybrid", "onsite"]
-    open_to_bangladesh: bool | None  # None = not stated
+    open_to_bd: bool | None          # None = not stated
     visa_support: bool | None
     years_required: int | None
     must_haves: list[Requirement]
