@@ -91,6 +91,12 @@ Keep it short. One problem per entry. Write it right after it happens.
 - **What I did:** not fixed yet, on purpose. Nothing uses `options` until scoring exists, so I can't measure the effect. Planned: when scoring is built, add a test case (someone with APIs but no backend systems must not get full points), watch it fail, then fix the prompt.
 - **What I learned:** I noticed it early but waited until I could measure it. A fix I can't verify is just a guess.
 
+### #12 · My timeout handler caught the wrong library's error
+- **What happened:** a call timed out after 31 s and crashed with `httpx2.ReadTimeout`, even though `llm.py` had an `except httpx.TimeoutException`.
+- **Why:** the Gemini SDK (3.6.1) sends requests with `httpx2`, but I caught errors from `httpx`. They are two different packages with different exception classes. Also, the same 30 s limit can fail two ways: a 504 from Google (#9) or a timeout on my side, depending on who gives up first.
+- **What I did:** catch `httpx2.TransportError` instead. It covers timeouts, dropped connections and DNS failures, and the log records the exact error type.
+- **What I learned:** Catch errors from the library that actually raises them, and prove a handler works by triggering the error, not by reading the code.
+
 ## Planned failures to trigger
 
 - [ ] LLM returns JSON that fails Pydantic validation

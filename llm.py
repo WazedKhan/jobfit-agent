@@ -1,6 +1,6 @@
 import time
 
-import httpx
+import httpx2
 from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel
@@ -48,8 +48,12 @@ def generate_json(prompt: str, schema: type[BaseModel]):
                 )
                 continue
             raise
-        except httpx.TimeoutException:
-            attempts.append({"model": model, "error": "timeout", "ms": _ms(start)})
+        except (
+            httpx2.TransportError
+        ) as te:  # timeouts, dropped connections, DNS failures
+            attempts.append(
+                {"model": model, "error": type(te).__name__, "ms": _ms(start)}
+            )
             continue
 
         attempts.append({"model": model, "ok": True, "ms": _ms(start)})
