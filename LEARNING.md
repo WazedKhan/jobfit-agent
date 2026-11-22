@@ -97,6 +97,12 @@ Keep it short. One problem per entry. Write it right after it happens.
 - **What I did:** catch `httpx2.TransportError` instead. It covers timeouts, dropped connections and DNS failures, and the log records the exact error type.
 - **What I learned:** Catch errors from the library that actually raises them, and prove a handler works by triggering the error, not by reading the code.
 
+### #13 · Same job, 3 runs: structure stable, wording drifts
+- **What happened:** I ran the Wolt job 3 times, all on `gemini-3.6-flash` with temperature at the default. Title, company, location, work_mode, the three nulls, salary, list counts (4 must-haves, 3 nice-to-haves) and every `options` list were identical. Only two nice-to-have `text` fields changed: "Background ideally in" / "Background in" / "Experience in", and run 2 dropped "(e.g. Spark, Flink)".
+- **Why:** the model samples tokens, so the same input can give different output. It also paraphrases requirement text instead of copying it. Dropping "ideally" turns a soft wish into a harder ask.
+- **What I did:** nothing yet, on purpose. No score exists to show the drift changes a verdict. Planned: if scoring shows it matters, tell the prompt to copy requirement text exactly, bump the prompt version and rerun the eval.
+- **What I learned:** Same prompt doesn't mean same output. Fields copied straight from the post stay stable; fields where the model has to interpret text drift. One clean job on one model proves little, so the real stability number comes from the eval set (15 jobs x 3 runs).
+
 ## Planned failures to trigger
 
 - [ ] LLM returns JSON that fails Pydantic validation
