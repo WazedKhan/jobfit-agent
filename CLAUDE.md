@@ -28,6 +28,7 @@ Context files in this repo:
 - Don't guess. Read the actual code (and `git status` / `git diff`) before suggesting anything.
 - Decisions come from me. Give options and trade-offs; never treat your suggestion as decided.
 - Before using any library, fetch its latest official docs for the installed version. Don't rely on remembered APIs.
+- Before giving commit commands, run `git status` and `git diff` on the real repo. I write code too, so don't assume you know every change. List only files that belong in the commit.
 - Read `PROGRESS.md` first and follow its "Rules for Claude".
 - Never run `git commit`, `git push` or any other command that changes git history. Only give me the commit message and the `git add` / `git commit` commands to run myself.
 

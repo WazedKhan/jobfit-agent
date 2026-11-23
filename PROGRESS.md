@@ -27,7 +27,8 @@ Anything that doesn't move one of these forward goes in the parking lot, not int
 6. **Don't guess. Check the code first.** Before suggesting a change, read the actual files involved (and `git status` / `git diff`). Never describe code, field names or behaviour from memory or from this file alone.
 7. **Decisions are mine.** Claude can lay out options and trade-offs, but doesn't pick for me or write a decision into this file until I've said it. If Claude made a call to keep work moving, it says so and marks it "Claude's suggestion, not confirmed".
 8. **Always fetch the latest docs before using a library.** Before writing or suggesting code that uses a library (google-genai, Pydantic, pytest, Langfuse, httpx, FastAPI, ...), look up its current official docs for the installed version (`uv.lock`). Don't rely on remembered APIs.
-9. Follow `CLAUDE.md`: one step at a time, explain the concept first, I write the agent logic, no em dashes.
+9. **Run `git diff` before every commit command.** Before giving me `git add` / `git commit`, run `git status` and `git diff` (and `git diff --staged`) on the real repo. Both of us write code, so changes I made can be outside Claude's sight. Only list files whose changes belong in that commit, and say if anything else is changed (test edits, debug code, files that must not be in git).
+10. Follow `CLAUDE.md`: one step at a time, explain the concept first, I write the agent logic, no em dashes.
 
 ## Critical path to the video
 
