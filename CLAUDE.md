@@ -25,6 +25,10 @@ Context files in this repo:
 - Never invent numbers for the video or README. Metrics come only from real eval runs.
 - I am a backend engineer (3.5 years; Python/Django/FastAPI, Go, PostgreSQL). Skip beginner explanations of Python or HTTP; do explain LLM, tracing and eval concepts.
 - No em dashes in any text written for me.
+- Don't guess. Read the actual code (and `git status` / `git diff`) before suggesting anything.
+- Decisions come from me. Give options and trade-offs; never treat your suggestion as decided.
+- Before using any library, fetch its latest official docs for the installed version. Don't rely on remembered APIs.
+- Read `PROGRESS.md` first and follow its "Rules for Claude".
 - Never run `git commit`, `git push` or any other command that changes git history. Only give me the commit message and the `git add` / `git commit` commands to run myself.
 
 ## Learning mode: learn, build, break, fix, log
