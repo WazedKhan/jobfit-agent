@@ -115,6 +115,12 @@ Keep it short. One problem per entry. Write it right after it happens.
 - **What I did:** found it from the `attempts` list in the run log. Not fixed yet. Planned: define `options` exactly in the prompt (empty when there is no "or"), and decide on a total time budget per run.
 - **What I learned:** a fallback doesn't just change who answers, it changes what the answer looks like. A loose prompt shows up as differences between models.
 
+### #16 · Same job, 3 runs again: consistent is not correct
+- **What happened:** reran the #13 test on the Wolt job, 3 runs, all on `gemini-3.6-flash`, one attempt each. Every decision field matched again: `work_mode`, `open_to_bd`, `visa_support`, `years_required`, salary, 4 must-haves and 3 nice-to-haves. Wording drifted again ("backend systems, APIs" vs "backend systems and APIs", "Ideally in" vs "Background in"), and this time an `options` value changed too: `"ML-adjacent teams"` vs `"ML-adjacent"`. All 3 runs said `work_mode: onsite`, but the post never says onsite. It only lists cities. Latency was 18 s, 26 s and 27 s against a 30 s timeout.
+- **Why:** `work_mode` has no `null` option, so the model must pick one, and it picked the same guess every time. Sampling changes wording, not the guess. `options` are also written by the model, so they drift like `text` does.
+- **What I did:** nothing yet. Planned: label `work_mode` in the eval set to measure how often it guesses; consider allowing `null` (not stated), then bump the prompt version and rerun. Eval recall must not use exact string match on `text` or `options`. The latency numbers go into the time-budget decision.
+- **What I learned:** repeated runs prove consistency, not correctness. A wrong guess repeated 3 times looks stable, so only labeled data catches it. And a normal call can take 27 s, so a 30 s limit leaves almost no room.
+
 ## Planned failures to trigger
 
 - [ ] LLM returns JSON that fails Pydantic validation
