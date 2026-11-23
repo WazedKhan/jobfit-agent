@@ -63,7 +63,7 @@ Flat files for now (not yet the `jobfit/` package layout from the spec):
 | `llm.py` | `generate_json(prompt, schema)`: tries `MODELS` in order (3.6-flash, 3.5-flash, 3.5-flash-lite). SDK retries off, 30 s timeout per call. Falls back on 5xx, 429 and `httpx2.TransportError`. Raises on other 4xx (my bugs). Returns response, model used, attempts. Raises `AllModelsFailed`. |
 | `main.py` | Reads `job.txt`, builds the extraction prompt (inline, not yet in `prompts/`), calls `generate_json`, saves the run to `runs/` before validating, validates with Pydantic, prints the JSON. |
 | `try_models.py` | Lists the models my key can see and sends a tiny prompt to each. |
-| `LEARNING.md` | 16 failure entries + 5 big lessons at the top. |
+| `LEARNING.md` | Motto + 5 big lessons at the top, 16 failure entries. |
 | `docs/spec.md`, `CLAUDE.md`, `README.md` | Spec, working rules, public README. |
 
 Not built yet from spec M1: `profile.yaml`, `tests/`, `prompts/extract_v1.md`. Add each when a step needs it (tests in step 2, profile in step 3).
@@ -111,4 +111,4 @@ Each item says when it comes back.
 
 - 2026-11-21 (session 1): v0, structured output, fallback + timeouts, run log, `LEARNING.md` #1 to #12.
 - 2026-11-22 (session 2): break tests: same job 3 runs (#13), prompt injection (#14), timeout changes output shape (#15). This file wasn't updated, which caused session 3 to repeat a test.
-- 2026-11-23 (session 3): reran the same-job test on one model (#16: consistent is not correct). Rewrote this file to stop drift. Next: step 2.
+- 2026-11-23 (session 3): reran the same-job test on one model (#16: consistent is not correct). Rewrote this file to stop drift; added rules 6 to 8 (check code first, decisions are mine, latest library docs) here and in `CLAUDE.md`. Added "My motto" with dated evidence to the top of `LEARNING.md`. Step 2 not started. Next chat: start at the "Now" section, beginning with the `open_to_bd = null` decision.
