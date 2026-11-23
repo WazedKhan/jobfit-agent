@@ -3,6 +3,22 @@
 Short notes on what broke while building JobFit Agent, why, and what I did about it.
 Written so I (or anyone) can read it in 5 minutes before an interview.
 
+## My motto
+
+**AI's main problem is guessing. It fills gaps with confident answers instead of saying "I don't know".** In a real project that costs more than a wrong answer: missed features, wrong calculations, work that drifts off track, and bad results reaching real users and teammates before anyone notices.
+
+So in everything I build (and in how I use AI to build it):
+
+1. **Ground it in what's real.** The model gets the real input; my AI assistant reads the real code and docs, not memory or a summary.
+2. **Make "I don't know" a valid answer.** `null` for "not stated"; decisions stay with me, not the assistant.
+3. **Check, don't trust.** Schemas check the shape, evals check the truth, I review every diff.
+
+Proven in this small project:
+
+- **#2, confident answer about a page it never read.** v0, 2026-11-21. Given only the Wolt URL, Gemini said Apply and claimed Wolt "routinely provides visa sponsorship". With the real text: Skip. Evidence: this log only. It happened before run logging existed (first file in `runs/` is 20:59 that day), which is why I added it.
+- **#16, the same wrong guess 3 times.** 2026-11-23. `runs/20261123-091331.json`, `-091423.json`, `-091512.json`: all three say `work_mode: onsite`; the post only lists cities. (`runs/` is not in git because it holds job text.)
+- **Session 3, assistant worked from stale notes.** `PROGRESS.md` was last committed 2026-11-21 22:40 and still listed "same job 3 runs" as to do. Commit `1eaf494` (2026-11-22 08:27) had already logged that test as #13. On 2026-11-23 the assistant suggested it again and I ran it again (#16).
+
 ## Read this first: the 5 big lessons
 
 1. **Check what the model received before blaming it.** Three of my "LLM bugs" were really my bugs (#3, #5, #6).
