@@ -12,9 +12,11 @@ class JobPost(BaseModel):
     title: str = Field(min_length=1)
     company: str = Field(min_length=1)
     location: str
-    work_mode: Literal["remote", "hybrid", "onsite"]
+    country: str | None
+    work_mode: Literal["remote", "hybrid", "onsite"] | None
     open_to_bd: bool | None
     visa_support: bool | None
+    relocation_support: bool | None
     years_required: int | None
     must_haves: list[Requirement]
     nice_to_haves: list[Requirement]

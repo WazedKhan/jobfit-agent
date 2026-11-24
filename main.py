@@ -10,15 +10,9 @@ from llm import AllModelsFailed, generate_json
 from models import JobPost
 
 job_post = Path("job.txt").read_text(encoding="utf-8")
-
-prompt = f"""Read this job post and fill in the fields.
-Rules:
-- Only use information written in the post, if something is not stated, use null.
-- must_haves: things the post requires, nice_to_haves: words like "ideally", "bonus", "plus", "nice to have".
-- If a requirement offers choices ("Python or Go"), list them in options.
-
-Job Post:
-{job_post}"""
+PROMPT_VERSION = "extract_v1"
+template = Path(f"prompts/{PROMPT_VERSION}.md").read_text(encoding="utf-8")
+prompt = template.replace("{job_post}", job_post)
 
 
 def save_run(run: dict) -> None:
@@ -28,7 +22,11 @@ def save_run(run: dict) -> None:
     print(f"Logged to {path}")
 
 
-run = {"time": datetime.now().isoformat(timespec="seconds"), "prompt": prompt}
+run = {
+    "time": datetime.now().isoformat(timespec="seconds"),
+    "prompt_version": PROMPT_VERSION,
+    "prompt": prompt,
+}
 
 try:
     response, model, attempts = generate_json(prompt, JobPost)

@@ -2,7 +2,7 @@
 
 The single source of truth for where JobFit Agent stands. A new chat reads this first, before suggesting anything.
 
-Last updated: 2026-11-23 (session 3)
+Last updated: 2026-11-24 (session 4)
 
 ## The goal (does not change)
 
@@ -48,11 +48,11 @@ Spec M1 to M7 is the reference. I follow this ladder, which builds the same thin
 
 ## Now
 
-**Step 2: `rules.py`.**
+**Step 2: `rules.py`.** Tests are written (`tests/test_rules.py`, 13 rows, currently red). Next:
 
-1. Put `MODELS` in `llm.py` back to the full list (it's set to 3.6-flash only for break test #16; not committed).
-2. Decide: what do the rules do when `open_to_bd` or `visa_support` is `null` (not stated)? Skip, apply, or flag? This must be answered before writing code.
-3. Claude explains the concept + asks 2 or 3 check questions. Then I write `rules.py` and pytest tests.
+1. Decide how rules know a job is in Bangladesh (see Open questions). The two `*-in-bd` test rows use `country` until then.
+2. I write `check_deal_breakers(job: JobPost) -> list[str]` in `rules.py` and make `uv run pytest` green.
+3. Claude reviews my diff.
 
 ## What's built
 
@@ -60,14 +60,16 @@ Flat files for now (not yet the `jobfit/` package layout from the spec):
 
 | File | What it does |
 | --- | --- |
-| `models.py` | `Requirement` (text + options) and `JobPost` (title, company, location, work_mode, open_to_bd, visa_support, years_required, must_haves, nice_to_haves, salary). Title and company must be non-empty. |
+| `models.py` | `Requirement` (text + options) and `JobPost` (title, company, location, country, work_mode (nullable), open_to_bd, visa_support, relocation_support, years_required, must_haves, nice_to_haves, salary). Title and company must be non-empty. |
 | `llm.py` | `generate_json(prompt, schema)`: tries `MODELS` in order (3.6-flash, 3.5-flash, 3.5-flash-lite). SDK retries off, 30 s timeout per call. Falls back on 5xx, 429 and `httpx2.TransportError`. Raises on other 4xx (my bugs). Returns response, model used, attempts. Raises `AllModelsFailed`. |
-| `main.py` | Reads `job.txt`, builds the extraction prompt (inline, not yet in `prompts/`), calls `generate_json`, saves the run to `runs/` before validating, validates with Pydantic, prints the JSON. |
+| `main.py` | Reads `job.txt`, loads `prompts/extract_v1.md` (`PROMPT_VERSION`, filled with `str.replace`, not `.format`), calls `generate_json`, saves the run (with `prompt_version`) to `runs/` before validating, validates with Pydantic, prints the JSON. |
+| `prompts/extract_v1.md` | Extraction prompt with field rules for country, work_mode, open_to_bd, visa_support, relocation_support. |
+| `tests/test_rules.py` | `make_job(**overrides)` helper + 13 parametrized deal-breaker cases. |
 | `try_models.py` | Lists the models my key can see and sends a tiny prompt to each. |
 | `LEARNING.md` | Motto + 5 big lessons at the top, 16 failure entries. |
 | `docs/spec.md`, `CLAUDE.md`, `README.md` | Spec, working rules, public README. |
 
-Not built yet from spec M1: `profile.yaml`, `tests/`, `prompts/extract_v1.md`. Add each when a step needs it (tests in step 2, profile in step 3).
+Not built yet from spec M1: `profile.yaml` (step 3). pytest 9.2 is a dev dependency; `pythonpath = ["."]` in `pyproject.toml` so tests can import the flat modules.
 
 Not in git: `.env`, `job.txt`, `job.clean.txt`, `runs/`.
 
@@ -80,11 +82,18 @@ Not in git: `.env`, `job.txt`, `job.clean.txt`, `runs/`.
 - 2026-11-21: don't add fallback models without testing they answer and extract well.
 - 2026-11-21: repo is public. No job text, no logs, no secrets in git.
 - 2026-11-23: don't fix things I can't measure yet. Extraction issues (wording drift, `work_mode` guessing, and/or in options) wait for the eval set.
+- 2026-11-24: deal-breaker rules, `rules.py` returns a list of reasons (empty = pass):
+  - Remote: pass only if `open_to_bd is True`. Extraction sets it true for global/worldwide, a country list with Bangladesh, or a region containing it (APAC, Asia, South Asia); false otherwise, including silence.
+  - Onsite, hybrid, or `work_mode` null (null treated as onsite): pass if the job is in Bangladesh; otherwise pass if `visa_support` or `relocation_support` is True.
+  - Relocation offered passes even if visa is explicitly false. Reason: missing a good lead costs more than checking a wrong job by hand. Watch the False Apply count in step 4.
+- 2026-11-24: added `relocation_support: bool | None`, made `work_mode` nullable, added `country`.
+- 2026-11-24: prompts live in `prompts/<name>_vN.md`, version saved in every run. v1 is not committed or evaluated yet, so it can still change; after the first commit, changes go to v2.
+- 2026-11-24: skip reason texts "Remote role not open to Bangladesh" and "Role outside Bangladesh without visa or relocation support". (Claude's suggestion, not confirmed.)
 - 2026-11-23: break tests stop at step 1. Validation-failure test moved to the parking lot so step 2 can start. (Claude's suggestion, not confirmed.)
 
 ## Open questions
 
-- **Blocking step 2:** what to do when `open_to_bd` / `visa_support` is `null`.
+- **Blocking the BD rows of step 2:** how do rules know a job is in Bangladesh? A: keep `country`, rule `country == "Bangladesh"` (fails on multi-city posts like "Dhaka or Singapore"). B: replace with `based_in_bd: bool` ("is Bangladesh one of the job locations?"). C: drop it and check `"bangladesh" in location.lower()` (misses "Dhaka" alone). Tests currently use A.
 - Time budget: per model vs total per run. Data: normal calls take 18 to 27 s against a 30 s limit (#16); worst run took 63 s (#15).
 - Soft skills as must-haves ("Empathy", "Curious mindset"): decide in step 3.
 
@@ -93,12 +102,13 @@ Not in git: `.env`, `job.txt`, `job.clean.txt`, `runs/`.
 Each item says when it comes back.
 
 - Validation-failure break test: when the spec's "retry once on validation failure" is added.
-- `work_mode` has no `null`, so the model guesses ("onsite" for Wolt, #16): measure in step 4 eval, then decide.
+- `work_mode` guessing ("onsite" for Wolt, #16): `work_mode` is now nullable and v1 says "do not guess"; Wolt came back null once. Measure in step 4 eval.
 - Requirement wording and `options` drift between runs (#13, #16): eval matching must not use exact strings (step 4).
 - "And" read as "or" in `options` (#11), `options` undefined for single requirements (#15): fix in step 3 when scoring can show the effect.
 - Prompt injection works on 3.5-flash-lite (#14): fix in step 6 (Improve), with a regression case in the eval set.
 - Total time budget per run: decide before step 5.
 - Test `gemini-3.1-flash-lite` / `gemini-2.5-flash-lite` as last-resort fallback: optional, only if outages block work.
+- `job.clean.txt` is not in `.gitignore` (shows untracked). Add it before any `git add .`.
 - Kafka scheduled search (I want to learn Kafka): after the video, not in v1.
 
 ## Gotchas
@@ -113,3 +123,4 @@ Each item says when it comes back.
 - 2026-11-21 (session 1): v0, structured output, fallback + timeouts, run log, `LEARNING.md` #1 to #12.
 - 2026-11-22 (session 2): break tests: same job 3 runs (#13), prompt injection (#14), timeout changes output shape (#15). This file wasn't updated, which caused session 3 to repeat a test.
 - 2026-11-23 (session 3): reran the same-job test on one model (#16: consistent is not correct). Rewrote this file to stop drift; added rules 6 to 8 (check code first, decisions are mine, latest library docs) here and in `CLAUDE.md`. Added "My motto" with dated evidence to the top of `LEARNING.md`. Step 2 not started. Next chat: start at the "Now" section, beginning with the `open_to_bd = null` decision.
+- 2026-11-24 (session 4): settled the deal-breaker rules (null handling, relocation, remote eligibility). Added `relocation_support`, nullable `work_mode`, `country`. Moved the prompt to `prompts/extract_v1.md` with version in run logs. Wolt run: `work_mode` now null instead of a guess (one run, not proof). Wrote 13 rule tests. Next chat: decide A/B/C for the BD location field, then I write `rules.py`.
