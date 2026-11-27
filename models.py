@@ -12,7 +12,6 @@ class JobPost(BaseModel):
     title: str = Field(min_length=1)
     company: str = Field(min_length=1)
     location: str
-    country: str | None
     work_mode: Literal["remote", "hybrid", "onsite"] | None
     open_to_bd: bool | None
     visa_support: bool | None
