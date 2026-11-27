@@ -2,7 +2,7 @@
 
 The single source of truth for where JobFit Agent stands. A new chat reads this first, before suggesting anything.
 
-Last updated: 2026-11-24 (session 4)
+Last updated: 2026-11-27 (session 5)
 
 ## The goal (does not change)
 
@@ -16,6 +16,8 @@ The video needs four things, so the project is done when I have them:
 4. **What I learned / still figuring out.**
 
 Anything that doesn't move one of these forward goes in the parking lot, not into today's work.
+
+**Scope (settled 2026-11-27, do not reopen):** the agent is for jobs **outside Bangladesh** only: remote roles open to someone in Bangladesh, or onsite/hybrid roles abroad with visa or relocation support. Local Bangladesh jobs are not a target. Don't design fields, rules or tests for local BD jobs, and don't ask about it again.
 
 ## Rules for Claude (anti-drift)
 
@@ -50,8 +52,8 @@ Spec M1 to M7 is the reference. I follow this ladder, which builds the same thin
 
 **Step 2: `rules.py`.** Tests are written (`tests/test_rules.py`, 13 rows, currently red). Next:
 
-1. Decide how rules know a job is in Bangladesh (see Open questions). The two `*-in-bd` test rows use `country` until then.
-2. I write `check_deal_breakers(job: JobPost) -> list[str]` in `rules.py` and make `uv run pytest` green.
+1. Remove `country` (model, prompt as `extract_v2.md` + `PROMPT_VERSION` bump, tests: `make_job` default, the two `*-in-bd` rows, the `country="Germany"` overrides). Pydantic ignores unknown fields by default, so leftover overrides fail silently.
+2. I write `check_deal_breakers(job: JobPost) -> list[str]` in `rules.py` and make `uv run pytest` green (11 rows after the `*-in-bd` rows are removed).
 3. Claude reviews my diff.
 
 ## What's built
@@ -84,16 +86,18 @@ Not in git: `.env`, `job.txt`, `job.clean.txt`, `runs/`.
 - 2026-11-23: don't fix things I can't measure yet. Extraction issues (wording drift, `work_mode` guessing, and/or in options) wait for the eval set.
 - 2026-11-24: deal-breaker rules, `rules.py` returns a list of reasons (empty = pass):
   - Remote: pass only if `open_to_bd is True`. Extraction sets it true for global/worldwide, a country list with Bangladesh, or a region containing it (APAC, Asia, South Asia); false otherwise, including silence.
-  - Onsite, hybrid, or `work_mode` null (null treated as onsite): pass if the job is in Bangladesh; otherwise pass if `visa_support` or `relocation_support` is True.
+  - Onsite, hybrid, or `work_mode` null (null treated as onsite): pass only if `visa_support` or `relocation_support` is True. (The original "pass if the job is in Bangladesh" part was reversed on 2026-11-27, see below.)
   - Relocation offered passes even if visa is explicitly false. Reason: missing a good lead costs more than checking a wrong job by hand. Watch the False Apply count in step 4.
-- 2026-11-24: added `relocation_support: bool | None`, made `work_mode` nullable, added `country`.
+- 2026-11-24: added `relocation_support: bool | None`, made `work_mode` nullable, added `country` (no reason was logged; it was a stand-in for the "in Bangladesh" check).
 - 2026-11-24: prompts live in `prompts/<name>_vN.md`, version saved in every run. v1 is not committed or evaluated yet, so it can still change; after the first commit, changes go to v2.
 - 2026-11-24: skip reason texts "Remote role not open to Bangladesh" and "Role outside Bangladesh without visa or relocation support". (Claude's suggestion, not confirmed.)
+- 2026-11-27: scope is jobs outside Bangladesh only. No local-BD pass rule, no `based_in_bd` field. Closes the A/B/C open question.
+- 2026-11-27: remove `country`. It duplicated `location` and no rule needs it. `location` stays as plain data (shown in output), never used in a rule.
 - 2026-11-23: break tests stop at step 1. Validation-failure test moved to the parking lot so step 2 can start. (Claude's suggestion, not confirmed.)
 
 ## Open questions
 
-- **Blocking the BD rows of step 2:** how do rules know a job is in Bangladesh? A: keep `country`, rule `country == "Bangladesh"` (fails on multi-city posts like "Dhaka or Singapore"). B: replace with `based_in_bd: bool` ("is Bangladesh one of the job locations?"). C: drop it and check `"bangladesh" in location.lower()` (misses "Dhaka" alone). Tests currently use A.
+- Skip reason wording: an onsite Dhaka job would get "Role outside Bangladesh without visa or relocation support" (correct skip, wrong text). Reword to e.g. "Onsite role without visa or relocation support", or keep. Not urgent.
 - Time budget: per model vs total per run. Data: normal calls take 18 to 27 s against a 30 s limit (#16); worst run took 63 s (#15).
 - Soft skills as must-haves ("Empathy", "Curious mindset"): decide in step 3.
 
@@ -109,6 +113,7 @@ Each item says when it comes back.
 - Total time budget per run: decide before step 5.
 - Test `gemini-3.1-flash-lite` / `gemini-2.5-flash-lite` as last-resort fallback: optional, only if outages block work.
 - `job.clean.txt` is not in `.gitignore` (shows untracked). Add it before any `git add .`.
+- Remote job at a Bangladeshi company passes (`open_to_bd` is true). Fine for now; revisit only if it shows up in the eval set.
 - Kafka scheduled search (I want to learn Kafka): after the video, not in v1.
 
 ## Gotchas
@@ -124,3 +129,4 @@ Each item says when it comes back.
 - 2026-11-22 (session 2): break tests: same job 3 runs (#13), prompt injection (#14), timeout changes output shape (#15). This file wasn't updated, which caused session 3 to repeat a test.
 - 2026-11-23 (session 3): reran the same-job test on one model (#16: consistent is not correct). Rewrote this file to stop drift; added rules 6 to 8 (check code first, decisions are mine, latest library docs) here and in `CLAUDE.md`. Added "My motto" with dated evidence to the top of `LEARNING.md`. Step 2 not started. Next chat: start at the "Now" section, beginning with the `open_to_bd = null` decision.
 - 2026-11-24 (session 4): settled the deal-breaker rules (null handling, relocation, remote eligibility). Added `relocation_support`, nullable `work_mode`, `country`. Moved the prompt to `prompts/extract_v1.md` with version in run logs. Wolt run: `work_mode` now null instead of a guess (one run, not proof). Wrote 13 rule tests. Next chat: decide A/B/C for the BD location field, then I write `rules.py`.
+- 2026-11-27 (session 5, in progress): installed uv. Settled scope (jobs outside BD only), dropped `country`, no `based_in_bd`. Next: remove `country`, write `rules.py`.
