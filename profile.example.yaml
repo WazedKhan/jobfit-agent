@@ -1,0 +1,41 @@
+# Example profile for JobFit Agent. Copy it to profile.yaml (gitignored) and fill in your own.
+# The score step quotes evidence from this file, so every line in `facts`
+# should be a full, true sentence you can defend in an interview.
+# Keep it private: no phone, address, salary or family.
+
+version: 1
+
+basics:
+  title: Backend Engineer
+  years_experience: 4              # professional years
+  location: City, Country
+  education: BSc in Computer Science, Example University
+
+skills:
+  languages: [Python, Go]
+  frameworks: [Django, FastAPI]
+  data: [PostgreSQL, Redis]
+  infra: [Docker, AWS, CI/CD]
+  other: [REST APIs]
+
+experience:
+  - company: Example Corp
+    role: Backend Engineer
+    dates: Jan 2023 to present
+    facts:
+      - Built a REST API in FastAPI and PostgreSQL that serves the company's mobile app.
+      - Added Redis caching to the slowest endpoints and cut their response time.
+
+  - company: Sample Ltd
+    role: Software Developer
+    dates: Jan 2021 to Dec 2022
+    facts:
+      - Fixed a race condition in order processing with database transactions and row locks.
+
+projects:
+  - name: Side Project
+    facts:
+      - Habit tracker API in Go with JWT auth, PostgreSQL and Docker Compose.
+
+open_source:
+  - Published a small Python package on PyPI.
